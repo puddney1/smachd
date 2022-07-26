@@ -1,11 +1,16 @@
-import { AppBar, Box, CssBaseline, Drawer, IconButton, Toolbar, Typography, Fab} from "@mui/material";
+import { AppBar, Box, CssBaseline, Drawer, IconButton, Toolbar, Typography, SpeedDial, SpeedDialAction, SpeedDialIcon} from "@mui/material";
 import MenuIcon from '@mui/icons-material/Menu';
 import PeopleIcon from '@mui/icons-material/People';
-import AddIcon from '@mui/icons-material/Add';
+import PostAddIcon from '@mui/icons-material/PostAdd';
+import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import * as React from 'react';
 import Menu from "./pages/menu";
 import Login from "./auth/login";
-import { useSession } from "@inrupt/solid-ui-react";
+import FriendsBar from "./pages/friendsbar";
+import AddFriend from "./addFriend/addFriend"; 
+import { useSession, CombinedDataProvider } from "@inrupt/solid-ui-react";
+import { render } from "react-dom";
+
 
 
 
@@ -17,6 +22,10 @@ function App(props) {
     const { window } = props;
     const [menuOpen, setMenuOpen] = React.useState(false);
     const [friendsOpen, setFriendsOpen] = React.useState(false);
+    const [addFriendsOpen, setAddFriendsOpen]  = React.useState(false);
+    
+   
+
 
     const menuToggle = () => {
         setMenuOpen(!menuOpen);
@@ -26,6 +35,12 @@ function App(props) {
         setFriendsOpen(!friendsOpen);
     };
 
+    const addFriends = () => {
+        setAddFriendsOpen(!addFriendsOpen);
+    };
+    
+    
+
     const menu = (
         <div>
            <Menu />
@@ -34,9 +49,10 @@ function App(props) {
 
     const friends = (
         <div>
-            friends
+            <FriendsBar />
         </div>
     )
+
 
     const container = window !== undefined ? () => window().document.body: undefined;
 
@@ -49,9 +65,14 @@ function App(props) {
             <Login />
         )
     }
-    
+
     return (
-        <Box sx={{ display: 'flex' }}>
+        <CombinedDataProvider
+          datasetUrl={session.info.webId}
+          thingUrl={session.info.webId}
+        >
+            {addFriendsOpen && <AddFriend addFriendsOpen={addFriendsOpen} addFriends={addFriends} />}
+       <Box sx={{ display: 'flex' }}>
             <CssBaseline />
             <AppBar
             position="fixed"
@@ -118,6 +139,8 @@ function App(props) {
                 <Toolbar
                  sx={{ display: {md: 'none'}}}
                  />
+                 <div id="main"></div>
+                 
                 <Typography paragraph>
           Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod
           tempor incididunt ut labore et dolore magna aliqua. Rhoncus dolor purus non
@@ -166,15 +189,29 @@ function App(props) {
                     {friends}
                 </Drawer>
             </Box>
-            <Fab
-               size="large" 
-               color="primary" 
-               aria-label="add"
-               sx={{ zIndex: 'modal', position: 'fixed', bottom: 16, right: 16,}}>
-                    <AddIcon />
-                </Fab>
+            <SpeedDial
+            ariaLabel="Speeddial"
+            icon={<SpeedDialIcon />}
+            sx={{ zIndex: 'modal', position: 'fixed', bottom: 20, right: 20, }}
+            >
+                <SpeedDialAction
+                key='New Post'
+                icon={ <PostAddIcon /> }
+                tooltipTitle={<div style={{width: 55, fontSize: 12}}>New Post</div>}
+                tooltipOpen 
+                />
+                <SpeedDialAction
+                key='Add Friend'
+                icon={ <PersonAddIcon /> }
+                tooltipTitle={<div style={{width: 60, fontSize: 12}}>Add Friend</div>}
+                tooltipPlacement="left"
+                tooltipOpen
+                onClick={ addFriends }
+                />
+            </SpeedDial>
         </Box>
+        </CombinedDataProvider>
     );
-        }
+            }
 
 export default App;
