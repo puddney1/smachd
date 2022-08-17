@@ -1,4 +1,4 @@
-import { LogoutButton } from "@inrupt/solid-ui-react";
+import { LogoutButton, Text } from "@inrupt/solid-ui-react";
 import React from "react";
 import { ReactComponent as Logo } from ".././images/logoweb.svg";
 import {
@@ -43,7 +43,17 @@ function Menu() {
               <ListItemIcon>
                 <LogoutIcon />
               </ListItemIcon>
-              <ListItemText primary="Logout" />
+              <ListItemText
+                primary="Logout"
+                secondary={
+                  <Text
+                    properties={[
+                      "http://xmlns.com/foaf/0.1/name",
+                      "http://www.w3.org/2006/vcard/ns#fn",
+                    ]}
+                  />
+                }
+              />
             </ListItemButton>
           </ListItem>
         </LogoutButton>

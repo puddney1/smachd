@@ -53,6 +53,9 @@ function Login() {
               solidcommunity.net
             </MenuItem>
             <MenuItem value={"https://solidweb.org/"}>solidweb.org</MenuItem>
+            <MenuItem value={"https://login.inrupt.com/"}>
+              Inrupt PodSpaces (beta)
+            </MenuItem>
           </Select>
 
           <TextField
