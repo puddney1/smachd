@@ -19,6 +19,7 @@ import {
   Typography,
   Box,
   Button,
+  Alert,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
@@ -26,7 +27,7 @@ function FriendsBar(props) {
   const { session } = useSession();
   const updateFriends = props.updateFriends;
   const [friendsList, setFriendsList] = React.useState();
-  const [friendsDisplay, setFriendsDisplay] = React.useState();
+  const [friendsDisplay, setFriendsDisplay] = React.useState([]);
 
   useEffect(() => {
     if (!session) return;
@@ -42,8 +43,8 @@ function FriendsBar(props) {
       const pod = podsUrls[0];
       const friendsList = `${pod}smachd/friends/`;
       const fList = await getOrCreateDataset(friendsList, session.fetch);
-      setFriendsList(fList);
-      if (fList.length != 0) {
+      if (fList.length > 0) {
+        setFriendsList(fList);
         await getFriends();
       }
     })();
@@ -92,6 +93,7 @@ function FriendsBar(props) {
 
   async function deleteFriend(e) {
     const uri = e.target.value;
+    <Alert>Are you sure you want to delete {uri.fn}?</Alert>;
     const friendIndex = getSourceUrl(friendsList);
     const removeFriend = removeThing(friendsList, uri);
     const updateList = await saveSolidDatasetAt(friendIndex, removeFriend, {
@@ -102,7 +104,7 @@ function FriendsBar(props) {
     await getFriends();
   }
 
-  if (friendsDisplay != 0) {
+  if (friendsDisplay.length > 0) {
     return (
       <Box
         sx={{
@@ -128,6 +130,7 @@ function FriendsBar(props) {
       >
         <h1>Friends</h1>
         No Friends to display.
+        <Button onClick={getFriends}>refresh</Button>
       </Box>
     );
   }

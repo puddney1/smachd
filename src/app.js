@@ -19,6 +19,7 @@ import Menu from "./pages/menu";
 import Login from "./auth/login";
 import FriendsBar from "./pages/friendsbar";
 import AddFriend from "./components/AddFriend";
+import NewPost from "./components/NewPost";
 import { useSession, CombinedDataProvider } from "@inrupt/solid-ui-react";
 import { render } from "react-dom";
 
@@ -31,6 +32,7 @@ function App(props) {
   const [menuOpen, setMenuOpen] = React.useState(false);
   const [friendsOpen, setFriendsOpen] = React.useState(false);
   const [addFriendsOpen, setAddFriendsOpen] = React.useState(false);
+  const [newPostOpen, setNewPostOpen] = React.useState(false);
   const { updateFriends } = props;
 
   const menuToggle = () => {
@@ -43,6 +45,10 @@ function App(props) {
 
   const addFriends = () => {
     setAddFriendsOpen(!addFriendsOpen);
+  };
+
+  const newPost = () => {
+    setNewPostOpen(!newPostOpen);
   };
 
   const menu = (
@@ -80,6 +86,7 @@ function App(props) {
           updateFriends={updateFriends}
         />
       )}
+      {newPostOpen && <NewPost newPostOpen={newPostOpen} newPost={newPost} />}
       <Box sx={{ display: "flex" }}>
         <CssBaseline />
         <AppBar
@@ -230,6 +237,7 @@ function App(props) {
               <div style={{ width: 55, fontSize: 12 }}>New Post</div>
             }
             tooltipOpen
+            onClick={newPost}
           />
           <SpeedDialAction
             key="Add Friend"
