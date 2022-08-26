@@ -9,6 +9,8 @@ import {
   SpeedDial,
   SpeedDialAction,
   SpeedDialIcon,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import PeopleIcon from "@mui/icons-material/People";
@@ -21,7 +23,6 @@ import FriendsBar from "./pages/friendsbar";
 import AddFriend from "./components/AddFriend";
 import NewPost from "./components/NewPost";
 import { useSession, CombinedDataProvider } from "@inrupt/solid-ui-react";
-import { render } from "react-dom";
 
 const drawerWidth = 240;
 const mainWidth = 300; // number should be half of required size
@@ -33,7 +34,18 @@ function App(props) {
   const [friendsOpen, setFriendsOpen] = React.useState(false);
   const [addFriendsOpen, setAddFriendsOpen] = React.useState(false);
   const [newPostOpen, setNewPostOpen] = React.useState(false);
-  const { updateFriends } = props;
+  const [friendsList, setFriendsList] = React.useState([]);
+  const [alertMessage, setAlertMessage] = React.useState();
+  const [severity, setSeverity] = React.useState();
+  const [openAlert, setOpenAlert] = React.useState(false);
+
+  const passToApp = (data) => {
+    setFriendsList(data);
+  };
+
+  const alertToggle = () => {
+    setOpenAlert(!openAlert);
+  };
 
   const menuToggle = () => {
     setMenuOpen(!menuOpen);
@@ -59,7 +71,7 @@ function App(props) {
 
   const friends = (
     <div>
-      <FriendsBar updateFriends={updateFriends} />
+      <FriendsBar passToApp={passToApp} addFriends={addFriendsOpen} />
     </div>
   );
 
@@ -83,10 +95,25 @@ function App(props) {
         <AddFriend
           addFriendsOpen={addFriendsOpen}
           addFriends={addFriends}
-          updateFriends={updateFriends}
+          friendsList={friendsList}
+          alertToggle={alertToggle}
+          setAlertMessage={setAlertMessage}
+          setSeverity={setSeverity}
         />
       )}
-      {newPostOpen && <NewPost newPostOpen={newPostOpen} newPost={newPost} />}
+      {newPostOpen && (
+        <NewPost
+          newPostOpen={newPostOpen}
+          newPost={newPost}
+          friendsList={friendsList}
+          alertToggle={alertToggle}
+          setAlertMessage={setAlertMessage}
+          setSeverity={setSeverity}
+        />
+      )}
+      <Snackbar open={openAlert} autoHideDuration={6000} onClose={alertToggle}>
+        <Alert severity={severity}>{alertMessage}</Alert>
+      </Snackbar>
       <Box sx={{ display: "flex" }}>
         <CssBaseline />
         <AppBar

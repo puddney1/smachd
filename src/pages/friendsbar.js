@@ -20,12 +20,13 @@ import {
   Box,
   Button,
   Alert,
+  CircularProgress,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import { sortByAttribute } from "../utils";
 
 function FriendsBar(props) {
   const { session } = useSession();
-  const updateFriends = props.updateFriends;
   const [friendsList, setFriendsList] = React.useState();
   const [friendsDisplay, setFriendsDisplay] = React.useState([]);
 
@@ -43,16 +44,18 @@ function FriendsBar(props) {
       const pod = podsUrls[0];
       const friendsList = `${pod}smachd/friends/`;
       const fList = await getOrCreateDataset(friendsList, session.fetch);
-      if (fList.length > 0) {
-        setFriendsList(fList);
-        await getFriends();
-      }
+      //console.log(fList);
+      setFriendsList(fList);
     })();
-  }, [updateFriends, session]);
+  }, [session, props.addFriends]);
+
+  useEffect(() => {
+    getFriends();
+  }, [friendsList]);
 
   async function getFriends() {
     const friendThings = friendsList ? getThingAll(friendsList) : [];
-    console.log(friendThings);
+    //console.log(friendThings);
     const friendsArray = friendThings.map((x) => {
       return {
         uri: x.url,
@@ -68,8 +71,9 @@ function FriendsBar(props) {
         ][0],
       };
     });
-    console.log(friendsArray);
+    friendsArray.sort(sortByAttribute("fn"));
     setFriendsDisplay(friendsArray);
+    props.passToApp(friendsArray);
   }
 
   const display = (item) => (
@@ -93,32 +97,34 @@ function FriendsBar(props) {
 
   async function deleteFriend(e) {
     const uri = e.target.value;
-    <Alert>Are you sure you want to delete {uri.fn}?</Alert>;
-    const friendIndex = getSourceUrl(friendsList);
-    const removeFriend = removeThing(friendsList, uri);
-    const updateList = await saveSolidDatasetAt(friendIndex, removeFriend, {
-      fetch: session.fetch,
-    });
-    console.log(updateList);
-    setFriendsList(updateList);
-    await getFriends();
+    if (window.confirm("Are you sure you want to delete?")) {
+      const friendIndex = getSourceUrl(friendsList);
+      const removeFriend = removeThing(friendsList, uri);
+      const updateList = await saveSolidDatasetAt(friendIndex, removeFriend, {
+        fetch: session.fetch,
+      });
+      //console.log(updateList);
+      setFriendsList(updateList);
+    }
   }
 
   if (friendsDisplay.length > 0) {
     return (
       <Box
         sx={{
-          paddingLeft: 0.1,
+          paddingLeft: 2,
           width: "100%",
           maxWidth: { md: 300 },
           float: "left",
         }}
       >
-        <h1>Friends</h1>
+        <h2>Friends</h2>
         {friendsDisplay.map(display)}
+        <Button onClick={getFriends}>refresh</Button>
       </Box>
     );
   } else {
+    setTimeout(getFriends, 1000);
     return (
       <Box
         sx={{
@@ -128,7 +134,7 @@ function FriendsBar(props) {
           float: "left",
         }}
       >
-        <h1>Friends</h1>
+        <h2>Friends</h2>
         No Friends to display.
         <Button onClick={getFriends}>refresh</Button>
       </Box>
