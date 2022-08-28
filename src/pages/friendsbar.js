@@ -4,7 +4,6 @@ import {
   getThing,
   getThingAll,
   getUrlAll,
-  getUrl,
   removeThing,
   saveSolidDatasetAt,
 } from "@inrupt/solid-client";
@@ -19,8 +18,6 @@ import {
   Typography,
   Box,
   Button,
-  Alert,
-  CircularProgress,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { sortByAttribute } from "../utils";
