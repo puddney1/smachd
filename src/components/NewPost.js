@@ -12,10 +12,9 @@ import {
   MenuItem,
   ListItemText,
   Select,
-  Alert,
-  AlertTitle,
-  LinearProgress,
-  Snackbar,
+  Chip,
+  Stack,
+  Typography,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import { Text, useSession } from "@inrupt/solid-ui-react";
@@ -31,15 +30,11 @@ import {
   addDatetime,
   saveSolidDatasetAt,
   setThing,
-  getSolidDatasetWithAcl,
-  createAclFromFallbackAcl,
-  setAgentResourceAccess,
-  saveAclFor,
   overwriteFile,
-  createAcl,
 } from "@inrupt/solid-client";
 import { getOrCreateDataset, generateAcl } from "../utils";
 import { schema, cal } from "rdf-namespaces";
+import { Box } from "@mui/system";
 
 export default function NewPost(props) {
   const handleClose = props.newPost;
@@ -47,14 +42,11 @@ export default function NewPost(props) {
   const [content, setContent] = React.useState();
   const [postsList, setPostsList] = React.useState();
   const [url, setUrl] = React.useState();
-  const [imageVideo, setImageVideo] = React.useState(); //used to setting local locations of images/video to upload
+  const [imageVideo, setImageVideo] = React.useState([]); //used to setting local locations of images/video to upload
   const friends = props.friendsList;
   const [acl, setACL] = React.useState([]);
   const [checkedName, setCheckedName] = React.useState([]);
-
-  // console.log("newpost:");
-  //console.log(friends);
-  //console.log(url + folder);
+  const [chips, setChips] = React.useState();
 
   useEffect(() => {
     if (!session) return;
@@ -97,19 +89,64 @@ export default function NewPost(props) {
     setACL(tempAcl);
   }, [checkedName]);
 
+  useEffect(() => {}, [imageVideo]);
+
   /// handle Alerts ///
   function handleAlert(message, severity) {
     props.setAlertMessage(message);
     props.setSeverity(severity);
     props.alertToggle();
   }
+
   /// Content section ///
   function handleContent(e) {
     setContent(e.target.value);
   }
+
   /// Image-video upload section ///
-  function handleIVChange(e) {
-    setImageVideo(e.target.files);
+  function handleIVChange(e, delIndex) {
+    const fileList = imageVideo;
+    let fileNames = [];
+    fileList.forEach((file) => fileNames.push(file.name));
+    //console.log(fileNames);
+
+    let inputList = Array.from(e.target.files);
+    if (fileList.length == 0) {
+      inputList.forEach((item) => fileList.push(item));
+    } else {
+      inputList.forEach((item) => {
+        let search = fileNames.includes(item.name);
+        //console.log(search);
+
+        if (!search) {
+          fileList.push(item);
+        }
+      });
+    }
+    console.log(fileList);
+    setImageVideo(fileList);
+    setChips(chipDisplay(fileList));
+  }
+
+  function chipDisplay(fileList) {
+    return fileList.map((item, index) => (
+      <Chip
+        key={index}
+        value={index}
+        label={item.name}
+        onDelete={handleFileDelete}
+        size="small"
+        sx={{ margin: 0.5 }}
+      />
+    ));
+  }
+
+  function handleFileDelete(e) {
+    const fileList = imageVideo;
+    fileList.splice(e.target.value, 1);
+    setImageVideo(fileList);
+    setChips(chipDisplay(fileList));
+    console.log(fileList);
   }
 
   async function placeFileInContainer(file, targetContainerURL) {
@@ -136,8 +173,6 @@ export default function NewPost(props) {
     }
   }
 
-  //const displayFilenames = (item) => <ListItemText primary={item.fn} />;
-
   /// ACL section ///
   const displayAclControls = (item) => (
     <MenuItem key={item.uri} value={item.fn}>
@@ -153,7 +188,7 @@ export default function NewPost(props) {
   /// Upload Post Section ///
   async function handleSubmit() {
     props.newPost(); // close dialog
-    handleAlert("Uploading");
+    handleAlert("Uploading", "info");
     const date = new Date(); // for upload folder
     console.log(date);
     const folder = date.getTime(); // sets unique upload folder
@@ -172,17 +207,15 @@ export default function NewPost(props) {
     /// Upload Images //
     let ivUrls = [];
     let uploadGo = true;
-    console.log(imageVideo);
+    //console.log(imageVideo);
     if (imageVideo != undefined) {
-      console.log("go");
       //skips if no images/video
       while (uploadGo == true) {
         for (let x = 0; x < imageVideo.length; x++) {
           const upload = await placeFileInContainer(imageVideo[x], uploadDir);
-          console.log(upload);
           if (upload != "error") {
             ivUrls.push(upload);
-            console.log(ivUrls);
+            //console.log(ivUrls);
           }
           if (upload == "error") {
             uploadGo = false;
@@ -190,12 +223,10 @@ export default function NewPost(props) {
             errorMessage = `Failed to upload file`;
           }
           uploadGo = false;
-          console.log("upload stopped");
+          //console.log("upload stopped");
         }
       }
     }
-
-    console.log("passed");
 
     /// Create and Set Thing  //
     if (continueUpload == true) {
@@ -219,13 +250,13 @@ export default function NewPost(props) {
 
       //console.log(addImageVideo);
       const addDate = addDatetime(addImageVideo, cal.created, date);
-      console.log(addDatetime);
+      //console.log(addDatetime);
       const setPost = setThing(dataset, addDate);
       const postContentIndex = getSourceUrl(dataset);
       const writePost = await saveSolidDatasetAt(postContentIndex, setPost, {
         fetch: session.fetch,
       });
-      console.log(writePost);
+      //console.log(writePost);
       if (writePost == null) {
         continueUpload = false;
         errorMessage = "Failed to write post file";
@@ -235,12 +266,12 @@ export default function NewPost(props) {
     if (continueUpload == true) {
       const file = uploadDir + ".acl";
       let makeAcl = new Blob([generateAcl(acl)], { type: "plain/text" });
-      console.log(makeAcl);
+      //console.log(makeAcl);
       const writeAcl = await overwriteFile(file, makeAcl, {
         contentType: "text/turtle",
         fetch: session.fetch,
       });
-      console.log(writeAcl);
+      //console.log(writeAcl);
       if (writeAcl == null) {
         continueUpload = false;
         errorMessage = "Failed to write acl";
@@ -301,7 +332,13 @@ export default function NewPost(props) {
             />
           </DialogContent>
           <Divider />
-          <Button variant="contained" component="label" color="primary">
+
+          <Button
+            variant="contained"
+            component="label"
+            color="primary"
+            sx={{ marginLeft: 3, marginRight: 3, marginTop: 1 }}
+          >
             {" "}
             <AddIcon /> Upload images/videos
             <input
@@ -312,10 +349,11 @@ export default function NewPost(props) {
               onChange={handleIVChange}
             />
           </Button>
-          {/*imageVideo.map(displayFilenames)*/}
+
+          <DialogContent>{chips}</DialogContent>
           <Divider />
           <DialogContent>
-            Access Control:
+            <Typography>Access Control:</Typography>
             <Select
               multiple
               value={checkedName}
@@ -333,6 +371,7 @@ export default function NewPost(props) {
               {friends.map(displayAclControls)}
             </Select>
           </DialogContent>
+
           <DialogActions>
             <Button onClick={handleClose} color="primary">
               cancel
