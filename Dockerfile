@@ -1,5 +1,5 @@
 # pull official base image
-FROM node:latest
+FROM node:latest as build
 
 # set working directory
 WORKDIR /smachd
