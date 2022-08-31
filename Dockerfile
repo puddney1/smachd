@@ -20,6 +20,6 @@ COPY . ./
 RUN npm run build
 
 # Deploy using ngnix
-FROM nginx:latest
+FROM nginx:alpine
 COPY ./nginx/nginx.conf /etc/nginx/nginx.conf
-COPY --from=build /smachd/build /usr/share/nginx/html
+COPY /smachd/build /usr/share/nginx/html
