@@ -16,5 +16,10 @@ RUN npm install react-scripts@3.4.1 -g --silent
 # add app
 COPY . ./
 
-# start app
-CMD ["npm", "start"]
+# Build app
+RUN npm run build
+
+# Deploy using ngnix
+FROM nginx:latest
+COPY ./nginx/nginx.conf /etc/nginx/nginx.conf
+COPY --from=build /smachd/build /usr/share/nginx/html
