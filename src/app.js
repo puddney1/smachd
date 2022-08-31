@@ -23,46 +23,54 @@ import FriendsBar from "./pages/friendsbar";
 import AddFriend from "./components/AddFriend";
 import NewPost from "./components/NewPost";
 import { useSession, CombinedDataProvider } from "@inrupt/solid-ui-react";
+import Main from "./pages/main";
 
-const drawerWidth = 240;
+const drawerWidth = 270;
 const mainWidth = 300; // number should be half of required size
 
 function App(props) {
   // Application variables //
   const { window } = props;
-  const [menuOpen, setMenuOpen] = React.useState(false);
-  const [friendsOpen, setFriendsOpen] = React.useState(false);
-  const [addFriendsOpen, setAddFriendsOpen] = React.useState(false);
-  const [newPostOpen, setNewPostOpen] = React.useState(false);
-  const [friendsList, setFriendsList] = React.useState([]);
-  const [alertMessage, setAlertMessage] = React.useState();
-  const [severity, setSeverity] = React.useState();
-  const [openAlert, setOpenAlert] = React.useState(false);
+  const [menuOpen, setMenuOpen] = React.useState(false); //state for loading menu on mobile devices
+  const [friendsOpen, setFriendsOpen] = React.useState(false); //state for loading friends sidebar on mobile devices
+  const [addFriendsOpen, setAddFriendsOpen] = React.useState(false); // state for toggling add Friends
+  const [newPostOpen, setNewPostOpen] = React.useState(false); // state for toggling new post
+  const [friendsList, setFriendsList] = React.useState([]); // holds list of friends to be passed to components
+  const [alertMessage, setAlertMessage] = React.useState(); //holds message for alert
+  const [severity, setSeverity] = React.useState(); // holds type of alert (success, warning, error, info)
+  const [openAlert, setOpenAlert] = React.useState(false); // state for toggling alert
 
+  // callback to set friends list
   const passToApp = (data) => {
     setFriendsList(data);
   };
 
+  // callback to toggle alert
   const alertToggle = () => {
     setOpenAlert(!openAlert);
   };
 
+  // toggle menu when on mobile device
   const menuToggle = () => {
     setMenuOpen(!menuOpen);
   };
 
+  // toggle friends sidebar when on mobile device
   const friendsToggle = () => {
     setFriendsOpen(!friendsOpen);
   };
 
+  // toggle add friends dialog
   const addFriends = () => {
     setAddFriendsOpen(!addFriendsOpen);
   };
 
+  // toggle new post dialog
   const newPost = () => {
     setNewPostOpen(!newPostOpen);
   };
 
+  /// Section to hold components and their props to be called in return
   const menu = (
     <div>
       <Menu />
@@ -75,22 +83,35 @@ function App(props) {
     </div>
   );
 
+  const main = (
+    <Main
+      friendsList={friendsList}
+      alertToggle={alertToggle}
+      setAlertMessage={setAlertMessage}
+      setSeverity={setSeverity}
+    />
+  );
+
+  // sets container for display of sidebar components on mobile devices
   const container =
     window !== undefined ? () => window().document.body : undefined;
 
-  //Solid
+  /// Display Section ///
 
+  // Check in logged into Solid, calls <login> if false
   const { session } = useSession();
 
   if (session.info.isLoggedIn == false) {
     return <Login />;
   }
 
+  // Display content
   return (
-    <CombinedDataProvider
+    <CombinedDataProvider // Provides session access to a Solid Pod
       datasetUrl={session.info.webId}
       thingUrl={session.info.webId}
     >
+      {/* Displays add friend component when toggled */}
       {addFriendsOpen && (
         <AddFriend
           addFriendsOpen={addFriendsOpen}
@@ -101,6 +122,8 @@ function App(props) {
           setSeverity={setSeverity}
         />
       )}
+
+      {/* Displays new post component when toggled */}
       {newPostOpen && (
         <NewPost
           newPostOpen={newPostOpen}
@@ -111,9 +134,12 @@ function App(props) {
           setSeverity={setSeverity}
         />
       )}
+
+      {/* Displays alert when toggled */}
       <Snackbar open={openAlert} autoHideDuration={6000} onClose={alertToggle}>
         <Alert severity={severity}>{alertMessage}</Alert>
       </Snackbar>
+
       <Box sx={{ display: "flex" }}>
         <CssBaseline />
         <AppBar
@@ -150,7 +176,7 @@ function App(props) {
             flexShrink: { sm: 0 },
           }}
         >
-          <Drawer
+          <Drawer // This drawer loads when on mobile device
             container={container}
             variant="temporary"
             open={menuOpen}
@@ -168,7 +194,7 @@ function App(props) {
           >
             {menu}
           </Drawer>
-          <Drawer
+          <Drawer // This drawer loads when on desktop device
             variant="permanent"
             sx={{
               display: { xs: "none", md: "block" },
@@ -183,7 +209,7 @@ function App(props) {
           </Drawer>
         </Box>
 
-        <Box
+        <Box // loads on all screens
           component="main"
           sx={{
             flexGrow: 1,
@@ -192,23 +218,7 @@ function App(props) {
           }}
         >
           <Toolbar sx={{ display: { md: "none" } }} />
-          <div id="main"></div>
-
-          <Typography paragraph>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-            eiusmod tempor incididunt ut labore et dolore magna aliqua. Rhoncus
-            dolor purus non enim praesent elementum facilisis leo vel. Risus at
-            ultrices mi tempus imperdiet. Semper risus in hendrerit gravida
-            rutrum quisque non tellus. Convallis convallis tellus id interdum
-            velit laoreet id donec ultrices. Odio morbi quis commodo odio aenean
-            sed adipiscing. Amet nisl suscipit adipiscing bibendum est ultricies
-            integer quis. Cursus euismod quis viverra nibh cras. Metus vulputate
-            eu scelerisque felis imperdiet proin fermentum leo. Mauris commodo
-            quis imperdiet massa tincidunt. Cras tincidunt lobortis feugiat
-            vivamus at augue. At augue eget arcu dictum varius duis at
-            consectetur lorem. Velit sed ullamcorper morbi tincidunt. Lorem
-            donec massa sapien faucibus et molestie ac.
-          </Typography>
+          <div id="main">{main}</div>
         </Box>
         <Box
           component="nav"
@@ -218,7 +228,7 @@ function App(props) {
             flexShrink: { sm: 0 },
           }}
         >
-          <Drawer
+          <Drawer // This drawer loads when on mobile device
             anchor="right"
             container={container}
             variant="temporary"
@@ -237,7 +247,7 @@ function App(props) {
           >
             {friends}
           </Drawer>
-          <Drawer
+          <Drawer // This drawer loads when on desktop device
             anchor="right"
             variant="permanent"
             sx={{
@@ -252,6 +262,8 @@ function App(props) {
             {friends}
           </Drawer>
         </Box>
+
+        {/* Holds buttons for toggling add Friends and New Post */}
         <SpeedDial
           ariaLabel="Speeddial"
           icon={<SpeedDialIcon />}
