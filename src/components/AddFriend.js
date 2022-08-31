@@ -8,16 +8,8 @@ import {
   DialogActions,
   TextField,
   FormControl,
-  Alert,
-  AlertTitle,
-  Snackbar,
 } from "@mui/material";
-import {
-  CombinedDataProvider,
-  useSession,
-  useDataset,
-  Value,
-} from "@inrupt/solid-ui-react/";
+import { useSession } from "@inrupt/solid-ui-react/";
 import {
   getSolidDataset,
   getUrlAll,
@@ -27,22 +19,19 @@ import {
   saveSolidDatasetAt,
   getSourceUrl,
   addDatetime,
-  addUrl,
   setThing,
   getProfileAll,
-  getStringNoLocale,
-  getThingAll,
 } from "@inrupt/solid-client";
 import { getOrCreateDataset } from "../utils";
 import { foaf, vcard, cal } from "rdf-namespaces";
 
 export default function AddFriend(props) {
   const handleClose = props.addFriends;
-  const updateFriends = props.updateFriends;
-  const [webid, setWebid] = useState();
-  const [friendsList, setFriendsList] = React.useState();
+  const [webid, setWebid] = useState(); //holds input
+  const [friendsList, setFriendsList] = React.useState(); //holds friends dataset location
   const { session } = useSession();
   const [alert, setAlert] = React.useState();
+  const friends = props.friendsList;
 
   useEffect(() => {
     if (!session) return;
@@ -60,42 +49,34 @@ export default function AddFriend(props) {
       const fList = await getOrCreateDataset(friendsList, session.fetch);
       setFriendsList(fList);
     })();
-  }, [session]);
+  }, [session, alert]);
 
+  /// sets the input to state
   function handleChange(e) {
     setWebid(e.target.value);
     setAlert("");
   }
+  /// Alert Section ///
+  function handleAlert(message, severity) {
+    props.setAlertMessage(message);
+    props.setSeverity(severity);
+    props.alertToggle();
+  }
 
-  const alertError = (alertMessage) => (
-    <Alert severity="error">
-      <AlertTitle>Error</AlertTitle>
-      {alertMessage}
-    </Alert>
-  );
-
-  const alertSuccess = (friend) => (
-    <Alert severity="success">
-      <AlertTitle>Success</AlertTitle>
-      {friend} has been added.
-    </Alert>
-  );
-
+  // Gets name from a profile, also checks if friend exists & handles errors
+  // (ie. if it doesnt get name, webid is wrong or try to add yourself).
+  // Called during handleSubmit
   async function doesFriendExist(index) {
-    // Gets name from a profile, also checks if friend exists & handles errors
-    // (ie. if it doesnt get name, webid is wrong or try to add yourself)
     try {
-      const fetch = session.fetch;
-      const getDataset = await getSolidDataset(index, { fetch });
-      const checkifexists = getThingAll(getDataset);
-      const existsCheck = checkForWebId(checkifexists);
-      console.log(existsCheck);
+      //Check if webid has already been added
+      const existsCheck = checkForWebId();
 
       if (existsCheck == true) {
-        setAlert(alertError("webid has already been added."));
+        handleAlert("webid has already been added.", "error");
         return "error";
       }
 
+      // if webid is not users, get the name of the user
       if (webid != session.info.webId) {
         const friendExist = await getProfileAll(webid);
         //console.log(friendExist);
@@ -106,51 +87,47 @@ export default function AddFriend(props) {
         ][0];
         return name;
       } else {
-        setAlert(alertError("You cannot add yourself."));
+        handleAlert("You cannot add yourself.", "error");
+        return "error";
       }
     } catch (error) {
       console.log("error: " + error.statusCode);
-      setAlert(alertError("Please check webid and try again."));
+      handleAlert("Please check webid and try again.", "error");
       return "error";
     }
   }
 
-  function checkForWebId(friends) {
-    const list = friends;
-    //console.log(list);
-    for (let x = 0; x < list.length; x = x + 1) {
-      if (
-        webid ==
-        list[x]["predicates"][vcard.url]["literals"][
-          "http://www.w3.org/2001/XMLSchema#string"
-        ][0]
-      ) {
-        return true;
-      } else {
-        return false;
+  /// called in doesFriendExist, checks if a friend has already been added
+  function checkForWebId() {
+    let value = false;
+    for (let x in friends) {
+      if (webid == friends[x].webid) {
+        value = true;
       }
     }
+    return value;
   }
 
+  /// Handles adding user to /smachd/friends/index.ttl
   async function handleSubmit() {
     const friendIndex = getSourceUrl(friendsList);
     const friend = await doesFriendExist(friendIndex);
 
     if (friend != "error") {
       const date = new Date();
-      const dateConvert = date.toDateString();
       const addWebId = addStringNoLocale(createThing(), vcard.url, webid);
       const addName = addStringNoLocale(addWebId, vcard.fn, friend);
       const addDate = addDatetime(addName, cal.created, date);
-      const addRequest = setThing(friendsList, addDate);
-      await saveSolidDatasetAt(friendIndex, addRequest, {
+      const setFriend = setThing(friendsList, addDate);
+      await saveSolidDatasetAt(friendIndex, setFriend, {
         fetch: session.fetch,
       });
-
-      setAlert(alertSuccess(friend));
+      handleAlert(`${friend} has been added.`, "success");
+      props.addFriends();
     }
   }
 
+  /// Display Section ///
   return (
     <div>
       <Dialog open={props.addFriendsOpen} onClose={handleClose}>
@@ -162,7 +139,7 @@ export default function AddFriend(props) {
               autoFocus
               label="webid"
               margin="dense"
-              id="name"
+              id="webid-input"
               type="text"
               helperText="Example: https://profilename.provider.com/profile/card#me"
               fullWidth
