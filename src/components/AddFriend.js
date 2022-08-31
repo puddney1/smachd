@@ -8,8 +8,6 @@ import {
   DialogActions,
   TextField,
   FormControl,
-  Alert,
-  AlertTitle,
 } from "@mui/material";
 import { useSession } from "@inrupt/solid-ui-react/";
 import {
@@ -23,15 +21,14 @@ import {
   addDatetime,
   setThing,
   getProfileAll,
-  getThingAll,
 } from "@inrupt/solid-client";
 import { getOrCreateDataset } from "../utils";
 import { foaf, vcard, cal } from "rdf-namespaces";
 
 export default function AddFriend(props) {
   const handleClose = props.addFriends;
-  const [webid, setWebid] = useState();
-  const [friendsList, setFriendsList] = React.useState();
+  const [webid, setWebid] = useState(); //holds input
+  const [friendsList, setFriendsList] = React.useState(); //holds friends dataset location
   const { session } = useSession();
   const [alert, setAlert] = React.useState();
   const friends = props.friendsList;
@@ -54,47 +51,32 @@ export default function AddFriend(props) {
     })();
   }, [session, alert]);
 
+  /// sets the input to state
   function handleChange(e) {
     setWebid(e.target.value);
     setAlert("");
   }
-
+  /// Alert Section ///
   function handleAlert(message, severity) {
     props.setAlertMessage(message);
     props.setSeverity(severity);
     props.alertToggle();
   }
 
-  const alertError = (alertMessage) => (
-    <Alert severity="error">
-      <AlertTitle>Error</AlertTitle>
-      {alertMessage}
-    </Alert>
-  );
-
-  const alertSuccess = (friend) => (
-    <Alert severity="success">
-      <AlertTitle>Success</AlertTitle>
-      {friend} has been added.
-    </Alert>
-  );
-
+  // Gets name from a profile, also checks if friend exists & handles errors
+  // (ie. if it doesnt get name, webid is wrong or try to add yourself).
+  // Called during handleSubmit
   async function doesFriendExist(index) {
-    // Gets name from a profile, also checks if friend exists & handles errors
-    // (ie. if it doesnt get name, webid is wrong or try to add yourself)
     try {
-      const fetch = session.fetch;
-      const getDataset = await getSolidDataset(index, { fetch });
-      const checkifexists = getThingAll(getDataset);
-      //console.log("checkifexists" + checkifexists);
+      //Check if webid has already been added
       const existsCheck = checkForWebId();
-      //console.log(existsCheck);
 
       if (existsCheck == true) {
         handleAlert("webid has already been added.", "error");
         return "error";
       }
 
+      // if webid is not users, get the name of the user
       if (webid != session.info.webId) {
         const friendExist = await getProfileAll(webid);
         //console.log(friendExist);
@@ -115,6 +97,7 @@ export default function AddFriend(props) {
     }
   }
 
+  /// called in doesFriendExist, checks if a friend has already been added
   function checkForWebId() {
     let value = false;
     for (let x in friends) {
@@ -125,6 +108,7 @@ export default function AddFriend(props) {
     return value;
   }
 
+  /// Handles adding user to /smachd/friends/index.ttl
   async function handleSubmit() {
     const friendIndex = getSourceUrl(friendsList);
     const friend = await doesFriendExist(friendIndex);
@@ -143,6 +127,7 @@ export default function AddFriend(props) {
     }
   }
 
+  /// Display Section ///
   return (
     <div>
       <Dialog open={props.addFriendsOpen} onClose={handleClose}>

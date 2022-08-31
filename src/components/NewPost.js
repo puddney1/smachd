@@ -13,7 +13,6 @@ import {
   ListItemText,
   Select,
   Chip,
-  Stack,
   Typography,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
@@ -26,30 +25,30 @@ import {
   getSourceUrl,
   addStringNoLocale,
   createThing,
-  addUrl,
   addDatetime,
   saveSolidDatasetAt,
   setThing,
   overwriteFile,
+  getProfileAll,
 } from "@inrupt/solid-client";
 import { getOrCreateDataset, generateAcl } from "../utils";
-import { schema, cal } from "rdf-namespaces";
-import { Box } from "@mui/system";
+import { schema, cal, vcard } from "rdf-namespaces";
 
 export default function NewPost(props) {
   const handleClose = props.newPost;
   const { session } = useSession();
-  const [content, setContent] = React.useState();
-  const [postsList, setPostsList] = React.useState();
-  const [url, setUrl] = React.useState();
-  const [imageVideo, setImageVideo] = React.useState([]); //used to setting local locations of images/video to upload
+  const [content, setContent] = React.useState(); //hold content
+  const [postsList, setPostsList] = React.useState(); //holds
+  const [url, setUrl] = React.useState(); //holds url used in handleSubmit
+  const [imageVideo, setImageVideo] = React.useState([]); //holds local locations of images/video to upload
   const friends = props.friendsList;
-  const [acl, setACL] = React.useState([]);
-  const [checkedName, setCheckedName] = React.useState([]);
-  const [chips, setChips] = React.useState();
+  const [acl, setACL] = React.useState([]); // holds the acl list
+  const [checkedName, setCheckedName] = React.useState([]); //holds list of names for <Select> in dialog
+  //const [chips, setChips] = React.useState(); // Disabled due to Images not working
 
   useEffect(() => {
     if (!session) return;
+    // Loads or creates /smached/posts/index.ttl
     (async () => {
       const postsDataset = await getSolidDataset(session.info.webId, {
         fetch: session.fetch,
@@ -85,11 +84,8 @@ export default function NewPost(props) {
         }
       }
     }
-    //console.log(tempAcl);
     setACL(tempAcl);
   }, [checkedName]);
-
-  useEffect(() => {}, [imageVideo]);
 
   /// handle Alerts ///
   function handleAlert(message, severity) {
@@ -99,12 +95,17 @@ export default function NewPost(props) {
   }
 
   /// Content section ///
+
+  // Sets content to state
   function handleContent(e) {
     setContent(e.target.value);
   }
 
   /// Image-video upload section ///
-  function handleIVChange(e, delIndex) {
+  {
+    /*
+  // Adds unique files to imageVideo State
+  function handleIVChange(e) {
     const fileList = imageVideo;
     let fileNames = [];
     fileList.forEach((file) => fileNames.push(file.name));
@@ -128,6 +129,7 @@ export default function NewPost(props) {
     setChips(chipDisplay(fileList));
   }
 
+  // Called at end of handleIVChange, maps values to Mui <Chip>
   function chipDisplay(fileList) {
     return fileList.map((item, index) => (
       <Chip
@@ -141,6 +143,8 @@ export default function NewPost(props) {
     ));
   }
 
+  // Called when delete pressed on a <Chip>, 
+  //removes file from imageVideo State
   function handleFileDelete(e) {
     const fileList = imageVideo;
     fileList.splice(e.target.value, 1);
@@ -149,6 +153,7 @@ export default function NewPost(props) {
     console.log(fileList);
   }
 
+  // Uploads files to a container when handleSubmit called 
   async function placeFileInContainer(file, targetContainerURL) {
     try {
       let reader = new FileReader();
@@ -157,8 +162,8 @@ export default function NewPost(props) {
         console.log("RESULT: ", reader.result);
       };
       const savedFile = await saveFileInContainer(
-        targetContainerURL, // Container URL
-        file, // File
+        targetContainerURL,
+        file,
         {
           slug: file.name.replace(/(\.\w+)+$/, ""),
           contentType: file.type,
@@ -172,50 +177,66 @@ export default function NewPost(props) {
       return "error";
     }
   }
+*/
+  }
 
   /// ACL section ///
+
+  // called when mapping friends
   const displayAclControls = (item) => (
     <MenuItem key={item.uri} value={item.fn}>
       <ListItemText primary={item.fn} />
     </MenuItem>
   );
 
+  // onChange(), useEffect[checkedName] is called to update ACL list
   function handleACL(e) {
     setCheckedName(e.target.value);
-    //useEffect[checkedName] is called to update ACL list
   }
 
   /// Upload Post Section ///
   async function handleSubmit() {
     props.newPost(); // close dialog
-    handleAlert("Uploading", "info");
+    handleAlert("Uploading", "info"); //notification
     const date = new Date(); // for upload folder
-    console.log(date);
     const folder = date.getTime(); // sets unique upload folder
     const uploadDir = url + folder + "/";
-    let continueUpload = true;
+    let continueUpload = true; //Boolean to stop upload on errors
     let errorMessage;
+
+    // gets users name and webid to add to post
+    const getName = await getProfileAll(session.info.webId);
+    const name = await getName.webIdProfile.graphs.default[session.info.webId][
+      "predicates"
+    ]["http://xmlns.com/foaf/0.1/name"]["literals"][
+      "http://www.w3.org/2001/XMLSchema#string"
+    ][0];
+    console.log(name);
 
     /// Create Dataset ///
     const dataset = await getOrCreateDataset(uploadDir, session.fetch);
-    //console.log(dataset);
+
+    /// Handle Errors
     if (dataset == undefined) {
       continueUpload = false;
       errorMessage = "Failed to create dataset";
+      handleAlert(errorMessage, "error");
     }
 
-    /// Upload Images //
-    let ivUrls = [];
+    //*** Disabled due to not being able to get files to work ***//
+
+    /// Upload Images ///
+    /*let ivUrls = [];
     let uploadGo = true;
     //console.log(imageVideo);
-    if (imageVideo != undefined) {
+    if (imageVideo.length != 0) {
       //skips if no images/video
       while (uploadGo == true) {
         for (let x = 0; x < imageVideo.length; x++) {
           const upload = await placeFileInContainer(imageVideo[x], uploadDir);
           if (upload != "error") {
             ivUrls.push(upload);
-            //console.log(ivUrls);
+            console.log(ivUrls);
           }
           if (upload == "error") {
             uploadGo = false;
@@ -223,21 +244,29 @@ export default function NewPost(props) {
             errorMessage = `Failed to upload file`;
           }
           uploadGo = false;
-          //console.log("upload stopped");
+          console.log("upload stopped");
         }
       }
-    }
+    }*/
 
-    /// Create and Set Thing  //
+    /// Create and Set Thing  ///
     if (continueUpload == true) {
-      const addContent = addStringNoLocale(createThing(), schema.text, content);
+      const addName = addStringNoLocale(createThing(), vcard.fn, name);
+      const addWebid = addStringNoLocale(
+        addName,
+        vcard.url,
+        session.info.webId
+      );
+      const addContent = addStringNoLocale(addWebid, schema.text, content);
       let addImageVideo;
-      console.log(ivUrls);
-      if (ivUrls.length == 0) {
-        console.log("called null");
-        let value = "none";
-        addImageVideo = addStringNoLocale(addContent, schema.url, value);
-      } else {
+      //console.log(ivUrls);
+      //if (ivUrls.length == 0) {
+      //console.log("called null");
+      let value = "none";
+      addImageVideo = addStringNoLocale(addContent, schema.url, value);
+      {
+        /// *** Lines just above and below disables due to files not working ***
+        /*}} else {
         addImageVideo = addStringNoLocale(addContent, schema.url, ivUrls[0]);
         for (let x = 1; x < ivUrls.length; x++) {
           addImageVideo = addStringNoLocale(
@@ -246,22 +275,17 @@ export default function NewPost(props) {
             ivUrls[x]
           );
         }
+      }*/
       }
 
-      //console.log(addImageVideo);
       const addDate = addDatetime(addImageVideo, cal.created, date);
-      //console.log(addDatetime);
       const setPost = setThing(dataset, addDate);
       const postContentIndex = getSourceUrl(dataset);
       const writePost = await saveSolidDatasetAt(postContentIndex, setPost, {
         fetch: session.fetch,
       });
-      //console.log(writePost);
-      if (writePost == null) {
-        continueUpload = false;
-        errorMessage = "Failed to write post file";
-      }
     }
+
     /// Set ACL ///
     if (continueUpload == true) {
       const file = uploadDir + ".acl";
@@ -271,12 +295,23 @@ export default function NewPost(props) {
         contentType: "text/turtle",
         fetch: session.fetch,
       });
-      //console.log(writeAcl);
+      /// *** Disabled due to not being able to get files working ***
+      /*for (let x in ivUrls) {
+        const file = ivUrls[x] + ".acl";
+        await overwriteFile(file, makeAcl, {
+          contentType: "text/turtle",
+          fetch: session.fetch,
+        });
+      }*/
+
+      /// Handle Errors
       if (writeAcl == null) {
         continueUpload = false;
         errorMessage = "Failed to write acl";
+        handleAlert(errorMessage, "error");
       }
     }
+    //console.log(writeAcl);
 
     /// Write directory reference to Posts (/posts/index.ttl) ///
     const reference = addStringNoLocale(
@@ -285,20 +320,20 @@ export default function NewPost(props) {
       `${uploadDir}index.ttl`
     );
     const setIndex = setThing(postsList, reference);
-    console.log(reference);
     const postsIndex = getSourceUrl(postsList);
     const writeIndex = await saveSolidDatasetAt(postsIndex, setIndex, {
       fetch: session.fetch,
     });
+
+    /// Handle Errors
     if (writeIndex == null) {
       continueUpload = false;
       errorMessage = "Failed to write index";
+      handleAlert(errorMessage, "error");
     } else {
       errorMessage = "Post completed!!";
+      handleAlert(errorMessage, "success");
     }
-
-    console.log(errorMessage);
-    handleAlert(errorMessage, "success");
   }
 
   /// Display Input Dialog ///
@@ -332,7 +367,7 @@ export default function NewPost(props) {
             />
           </DialogContent>
           <Divider />
-
+          {/* *** Disabled due to not getting files working ***
           <Button
             variant="contained"
             component="label"
@@ -351,6 +386,7 @@ export default function NewPost(props) {
           </Button>
 
           <DialogContent>{chips}</DialogContent>
+              */}
           <Divider />
           <DialogContent>
             <Typography>Access Control:</Typography>
