@@ -8,13 +8,12 @@ WORKDIR /smachd
 ENV PATH /smachd/node_modules/.bin:$PATH
 
 # install app dependencies
-COPY package.json ./
-COPY package-lock.json ./
+COPY package*.json .
 RUN npm install --silent
-RUN npm install react-scripts@3.4.1 -g --silent
+#RUN npm install react-scripts@3.4.1 -g --silent
 
 # add app
-COPY . ./
+COPY . .
 
 # Build app
 RUN npm run build
@@ -22,4 +21,4 @@ RUN npm run build
 # Deploy using ngnix
 FROM nginx:alpine
 COPY ./nginx/nginx.conf /etc/nginx/nginx.conf
-COPY /smachd/build /usr/share/nginx/html
+COPY --from=build /smachd/build /usr/share/nginx/html
