@@ -35,6 +35,7 @@ function Login() {
         <Typography sx={{ color: "white" }}>
           Please select a Solid provider from the menu or input manually.
         </Typography>
+
         <FormControl sx={{ marginTop: 5 }}>
           <InputLabel id="solid-provider">Provider</InputLabel>
           <Select
@@ -80,6 +81,10 @@ function Login() {
               Login
             </Button>
           </LoginButton>
+          <Typography variant="caption" sx={{ color: "white", paddingTop: 5 }}>
+            *Note: For smachd to work correctly, please give access to other
+            people and apps on first login.
+          </Typography>
         </FormControl>
       </Box>
     </Backdrop>
