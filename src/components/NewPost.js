@@ -64,13 +64,30 @@ export default function NewPost(props) {
       setPostsList(pList);
       setUrl(postsList);
 
-      //selects all names in friends for ACL
+      //selects all names in friends for ACL control
       let tempFriends = [];
       for (let x in friends) {
         //console.log(friends[x].webid);
         tempFriends.push(friends[x].fn);
       }
       setCheckedName(tempFriends);
+
+      // selects all webids from friends and updates acl for
+      // /smachd/posts/index.ttl so all webids can access it
+      let masterAcl = [];
+      for (let x in friends) {
+        //console.log(friends[x].webid);
+        masterAcl.push(friends[x].webid);
+      }
+      const file = postsList + ".acl";
+      let makeAcl = new Blob([generateAcl(masterAcl)], { type: "plain/text" });
+      //console.log(makeAcl);
+      const writeFile = await overwriteFile(file, makeAcl, {
+        contentType: "text/turtle",
+        fetch: session.fetch,
+      });
+      console.log(masterAcl);
+      console.log(writeFile);
     })();
   }, [session]);
 
@@ -211,7 +228,7 @@ export default function NewPost(props) {
     ]["http://xmlns.com/foaf/0.1/name"]["literals"][
       "http://www.w3.org/2001/XMLSchema#string"
     ][0];
-    console.log(name);
+    //console.log(name);
 
     /// Create Dataset ///
     const dataset = await getOrCreateDataset(uploadDir, session.fetch);
