@@ -24,6 +24,7 @@ import AddFriend from "./components/AddFriend";
 import NewPost from "./components/NewPost";
 import { useSession, CombinedDataProvider } from "@inrupt/solid-ui-react";
 import Main from "./pages/main";
+import { ReactComponent as Logo } from "./images/logoweb.svg";
 
 const drawerWidth = 270;
 const mainWidth = 300; // number should be half of required size
@@ -159,6 +160,13 @@ function App(props) {
             >
               <MenuIcon />
             </IconButton>
+            <Logo
+              style={{
+                maxHeight: 25,
+                marginRight: 200,
+                fill: "skyblue",
+              }}
+            />
             <IconButton
               color="inherit"
               edge="end"
