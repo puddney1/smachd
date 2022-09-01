@@ -20,6 +20,7 @@ import {
   Button,
   Divider,
   CircularProgress,
+  Tooltip,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { sortByAttribute } from "../utils";
@@ -115,7 +116,15 @@ function FriendsBar(props) {
         <Typography>Date Added: {dateConvert(item.date)}</Typography>
       </AccordionDetails>
       <Box sx={{ display: "flex", justifyContent: "flex-end", padding: 2 }}>
-        <Button value={item.uri} onClick={deleteFriend} variant="outlined">
+        <Tooltip title="not implemented yet">
+          <Button variant="outlined">View Profile</Button>
+        </Tooltip>
+        <Button
+          value={item.uri}
+          onClick={deleteFriend}
+          variant="outlined"
+          sx={{ marginLeft: 1 }}
+        >
           Delete
         </Button>
       </Box>
