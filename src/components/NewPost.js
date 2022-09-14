@@ -86,8 +86,8 @@ export default function NewPost(props) {
         contentType: "text/turtle",
         fetch: session.fetch,
       });
-      console.log(masterAcl);
-      console.log(writeFile);
+      //console.log(masterAcl);
+      //console.log(writeFile);
     })();
   }, [session]);
 
